@@ -1,88 +1,92 @@
 import streamlit as st
-import tensorflow as tf
-from tensorflow.keras.preprocessing import image
 import numpy as np
+from PIL import Image
+import tflite_runtime.interpreter as tflite
 import os
-import pandas as pd
 
 # ==============================
 # PAGE CONFIG
 # ==============================
-st.set_page_config(page_title="🐟 FishVision", layout="wide", page_icon="🐠")
+st.set_page_config(page_title="🐟 FishVision", layout="centered", page_icon="🐠")
 
 # ==============================
-# CUSTOM STYLING
+# CUSTOM STYLING (Blue Theme)
 # ==============================
 st.markdown("""
     <style>
-        .stApp {
-            background: linear-gradient(180deg, #002b46 0%, #00446d 60%, #002b46 100%);
+        .main {
+            background: linear-gradient(180deg, #001F3F 0%, #003366 40%, #0A1829 100%);
             color: white;
             font-family: 'Segoe UI', sans-serif;
         }
         h1 {
             text-align: center;
             color: #E9F8FF;
-            font-size: 2rem;
-            margin-bottom: 0.3rem;
+            font-size: 2.3rem;
+            margin-bottom: 0;
         }
         h3 {
             text-align: center;
-            color: #AEEEEE;
-            font-size: 1rem;
-            margin-top: 0rem;
-        }
-        h2 {
-            text-align: center;
-            color: #FFD166;
+            color: #B0E0E6;
+            margin-top: 0;
+            margin-bottom: 10px;
             font-size: 1.1rem;
-            margin-bottom: 0.6rem;
         }
-        hr {
-            border: 0.5px solid rgba(255,255,255,0.15);
-            margin: 10px 0;
-        }
-        .feature-line {
+        .feature-box {
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 25px;
         }
         .feature {
-            background: rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.1);
             border-radius: 10px;
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            border: 1px solid rgba(255,255,255,0.15);
-            box-shadow: 0 0 6px rgba(0,191,255,0.25);
+            padding: 10px 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 0 8px rgba(0,191,255,0.3);
+            font-size: 0.9rem;
         }
         .prediction-box {
-            background: rgba(255,255,255,0.08);
+            background: #04293A;
             border-radius: 12px;
-            padding: 12px;
+            padding: 15px;
+            text-align: center;
+            color: #C7F9CC;
+            font-size: 1.1rem;
             margin-top: 10px;
+        }
+        .desc {
+            font-size: 0.95rem;
+            color: #AEEEEE;
+            text-align: center;
+            margin-top: 6px;
+            font-style: italic;
         }
         footer {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# HEADER
+# HEADER SECTION
 # ==============================
-st.markdown("<h1>🐟🐠 FishVision 🐡🐠</h1>", unsafe_allow_html=True)
-st.markdown("<h3>🌊 Smart Fish Species Classifier</h3>", unsafe_allow_html=True)
+st.markdown("<h1>🐠 FishVision</h1>", unsafe_allow_html=True)
+st.markdown("<h3>🌊 Intelligent Fish Species Classifier</h3>", unsafe_allow_html=True)
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ==============================
-# LOAD MODEL & LABELS
+# LOAD MODEL + LABELS
 # ==============================
-MODEL_PATH = "fishvision_model.h5"
+MODEL_PATH = "fishvision_model.tflite"
 LABELS_PATH = "labels.txt"
 
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model(MODEL_PATH)
+    interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    interpreter.allocate_tensors()
+    return interpreter
 
 @st.cache_data
 def load_labels():
@@ -95,79 +99,88 @@ model = load_model()
 labels = load_labels()
 
 # ==============================
-# FISH DESCRIPTIONS
+# SHORT DESCRIPTIONS
 # ==============================
 fish_descriptions = {
-    "fish sea_food black_sea_sprat": "A small fish found in the Black Sea, popular in Mediterranean cuisine.",
-    "fish sea_food gilt_head_bream": "A silver-scaled fish known for its mild, delicate flavor.",
-    "fish sea_food hourse_mackerel": "A fast-swimming fish found in coastal waters, rich in omega-3.",
-    "fish sea_food red_mullet": "A reddish fish known for its sweet taste and tender meat.",
-    "fish sea_food red_sea_bream": "Commonly found in warm seas, valued for its firm texture.",
-    "fish sea_food sea_bass": "A popular fish species found worldwide, prized for its flavor.",
-    "fish sea_food shrimp": "Technically a crustacean, loved for its sweet and delicate taste.",
-    "fish sea_food striped_red_mullet": "Recognized for its stripes and served in fine dining cuisines.",
-    "fish sea_food trout": "A freshwater fish often found in cold streams and lakes.",
-    "animal fish bass": "A strong freshwater predator known for its bold flavor.",
-    "animal fish": "Generic fish category for aquatic species."
+    "fish sea_food black_sea_sprat": "A small fish found in the Black Sea, often used in Mediterranean cuisine.",
+    "fish sea_food gilt_head_bream": "A silvery fish known for its mild, delicate taste.",
+    "fish sea_food hourse_mackerel": "Fast-swimming fish rich in omega-3 and found in coastal waters.",
+    "fish sea_food red_mullet": "A reddish fish with a sweet, tender texture.",
+    "fish sea_food red_sea_bream": "Common in warm seas, known for firm, white flesh.",
+    "fish sea_food sea_bass": "Popular worldwide, loved for its soft flavor.",
+    "fish sea_food shrimp": "Technically a crustacean, loved for its sweet, light taste.",
+    "fish sea_food striped_red_mullet": "Striped fish often served in fine-dining dishes.",
+    "fish sea_food trout": "Freshwater fish known for its vibrant spots and flavor.",
+    "animal fish bass": "A strong freshwater predator popular in sport fishing.",
+    "animal fish": "General aquatic species with varying traits."
 }
 
 # ==============================
-# HIGHLIGHTS
+# FEATURES SECTION
 # ==============================
-st.markdown("<h2>✨ Highlights</h2>", unsafe_allow_html=True)
-st.markdown("""
-<div class="feature-line">
-    <div class="feature">🐟 Detects 11 Fish Species</div>
-    <div class="feature">📊 Top-3 Predictions in Table</div>
-    <div class="feature">💬 Gives Fish Description</div>
-    <div class="feature">🌊 Ocean-Inspired Interface</div>
-</div>
-""", unsafe_allow_html=True)
-st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown("<div class='feature-box'>", unsafe_allow_html=True)
+st.markdown("<div class='feature'>🐟 Detects Multiple Fish Species</div>", unsafe_allow_html=True)
+st.markdown("<div class='feature'>📊 Displays Top Predictions</div>", unsafe_allow_html=True)
+st.markdown("<div class='feature'>💬 Provides Fish Descriptions</div>", unsafe_allow_html=True)
+st.markdown("<div class='feature'>🌊 Compact Blue-Themed Interface</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ==============================
 # IMAGE UPLOAD
 # ==============================
-st.subheader("📸 Upload Your Fish Image Below")
-uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
+st.subheader("📸 Upload a Fish Image Below")
+uploaded_file = st.file_uploader("Choose an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
 
 def preprocess_image(img):
-    img = image.load_img(img, target_size=(224, 224))
-    img_array = image.img_to_array(img)
-    if img_array.shape[-1] == 4:
-        img_array = img_array[..., :3]
-    img_array = np.expand_dims(img_array, axis=0) / 255.0
+    img = Image.open(img).convert("RGB").resize((224, 224))
+    img_array = np.array(img, dtype=np.float32) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
     return img_array
+
+def predict_image(interpreter, img_array):
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    interpreter.set_tensor(input_details[0]['index'], img_array)
+    interpreter.invoke()
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    return output_data
 
 # ==============================
 # PREDICTION SECTION
 # ==============================
 if uploaded_file:
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.image(uploaded_file, caption="📷 Uploaded Image", width=230)
+    colA, colB = st.columns([1, 1])
+    with colA:
+        st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+    with colB:
+        try:
+            img_array = preprocess_image(uploaded_file)
+            preds = predict_image(model, img_array)[0]
+            sorted_idx = np.argsort(preds)[::-1]
+            top_idx = sorted_idx[:3]
 
-    with col2:
-        img_array = preprocess_image(uploaded_file)
-        preds = model.predict(img_array)[0]
-        sorted_idx = np.argsort(preds)[::-1]
-        top3_idx = sorted_idx[:3]
-        top3_labels = [labels[i] for i in top3_idx]
-        top3_scores = [preds[i]*100 for i in top3_idx]
-        confidence = top3_scores[0]
-        predicted_label = top3_labels[0]
+            top_labels = [labels[i] for i in top_idx]
+            top_scores = [preds[i] * 100 for i in top_idx]
 
-        if confidence < 65 or predicted_label.lower().startswith("animal"):
-            st.error("🚫 This doesn’t seem to be a fish image.")
-        else:
-            with st.container():
-                st.markdown(f"### 🎯 Prediction: **{predicted_label}** ({confidence:.2f}%) 🐠🐡")
-                st.markdown(f"*{fish_descriptions.get(predicted_label, 'A fascinating aquatic species!')}*")
-                df = pd.DataFrame({
-                    "🏅 Rank": [1, 2, 3],
-                    "🐟 Fish Name": top3_labels,
-                    "Confidence (%)": [f"{val:.2f}" for val in top3_scores]
-                })
-                st.table(df)
+            predicted_label = top_labels[0]
+            confidence = top_scores[0]
+
+            if confidence < 65 or predicted_label.lower().startswith("animal"):
+                st.error("🚫 This doesn’t seem to be a fish image.")
+            else:
+                st.markdown(
+                    f"<div class='prediction-box'>🎯 <b>{predicted_label}</b><br>Confidence: {confidence:.2f}%</div>",
+                    unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"<p class='desc'>{fish_descriptions.get(predicted_label, 'A fascinating aquatic species!')}</p>",
+                    unsafe_allow_html=True
+                )
+
+                st.markdown("### 🧠 Predictions Summary")
+                for label, score in zip(top_labels, top_scores):
+                    st.write(f"🐠 **{label}** — {score:.2f}%")
+        except Exception as e:
+            st.error(f"⚠️ Error: {e}")
 else:
     st.info("⬆️ Upload an image to begin classification")
