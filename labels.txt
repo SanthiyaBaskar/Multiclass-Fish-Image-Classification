@@ -1,5 +1,3 @@
-animal fish
-animal fish bass
 fish sea_food black_sea_sprat
 fish sea_food gilt_head_bream
 fish sea_food hourse_mackerel
