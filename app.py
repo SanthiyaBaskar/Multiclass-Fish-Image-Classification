@@ -146,7 +146,11 @@ if uploaded_file:
         try:
             image = Image.open(uploaded_file)
             image = image.convert("RGB")
-            st.image(image, caption="Uploaded Image", use_container_width=True)
+            # Streamlit fallback fix for old versions (no use_container_width support)
+            try:
+                st.image(image, caption="Uploaded Image", use_container_width=True)
+            except TypeError:
+                st.image(image, caption="Uploaded Image", width=300)
         except Exception as e:
             st.error(f"⚠️ Could not display image. Error: {e}")
             st.stop()
