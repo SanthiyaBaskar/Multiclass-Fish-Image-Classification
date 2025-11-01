@@ -36,23 +36,21 @@ st.markdown("""
         border: 1px solid rgba(255,255,255,0.2);
         margin: 20px 0;
     }
-    .highlight-section {
-        text-align: center;
-    }
-    .feature-box {
+    .highlight-line {
         display: flex;
         justify-content: center;
-        flex-wrap: wrap;
         gap: 15px;
-        margin-top: 20px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        margin-bottom: 25px;
     }
     .feature {
         background: rgba(255,255,255,0.1);
-        border-radius: 20px;
-        padding: 10px 18px;
-        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 15px;
+        padding: 8px 16px;
+        border: 1px solid rgba(255,255,255,0.2);
         box-shadow: 0 0 10px rgba(0,191,255,0.3);
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
     .prediction-box {
         background: #01334d;
@@ -100,14 +98,15 @@ def load_model():
 def load_labels():
     if os.path.exists(LABELS_PATH):
         with open(LABELS_PATH, "r") as f:
-            return [line.strip() for line in f.readlines()]
+            labels = [line.strip() for line in f.readlines()]
+            return labels[:9]  # only take 9 species
     return []
 
 model = load_model()
 labels = load_labels()
 
 # ==============================
-# FISH DESCRIPTIONS
+# SHORT DESCRIPTIONS
 # ==============================
 fish_descriptions = {
     "fish sea_food black_sea_sprat": "A small fish found in the Black Sea, often used in Mediterranean cuisine.",
@@ -118,22 +117,20 @@ fish_descriptions = {
     "fish sea_food sea_bass": "Popular worldwide, loved for its soft flavor.",
     "fish sea_food shrimp": "Technically a crustacean, loved for its sweet, light taste.",
     "fish sea_food striped_red_mullet": "Striped fish often served in fine-dining dishes.",
-    "fish sea_food trout": "Freshwater fish known for its vibrant spots and flavor.",
-    "animal fish bass": "A strong freshwater predator popular in sport fishing.",
-    "animal fish": "General aquatic species with varying traits."
+    "fish sea_food trout": "Freshwater fish known for its vibrant spots and flavor."
 }
 
 # ==============================
-# HIGHLIGHTS SECTION
+# HIGHLIGHTS — SINGLE LINE
 # ==============================
 st.markdown("""
-<div class='highlight-section'>
+<div style="text-align:center;">
 <h2>✨ Highlights ✨</h2>
-<div class='feature-box'>
-    <div class='feature'>🐠 Detects 11 Fish Species</div>
-    <div class='feature'>📊 Top-3 Predictions in Table</div>
-    <div class='feature'>💬 Gives Fish Description</div>
-    <div class='feature'>🌊 Ocean-Inspired Interface</div>
+<div class='highlight-line'>
+    <div class='feature'>🐟 Detects 9 Fish Species</div>
+    <div class='feature'>📊 Top-3 Predictions</div>
+    <div class='feature'>💬 Fish Descriptions</div>
+    <div class='feature'>🌊 Oceanic Theme</div>
 </div>
 <hr>
 </div>
@@ -143,7 +140,7 @@ st.markdown("""
 # IMAGE UPLOAD
 # ==============================
 st.subheader("📸 Upload Your Fish Image Below")
-uploaded_file = st.file_uploader("Drag and drop your image or browse", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Drag and drop or browse", type=["jpg", "jpeg", "png"])
 
 def preprocess_image(img):
     img = Image.open(img).convert("RGB").resize((224, 224))
@@ -167,7 +164,7 @@ if uploaded_file:
     with colA:
         try:
             image = Image.open(uploaded_file).convert("RGB")
-            st.image(np.array(image), caption="Uploaded Image", use_container_width=True)
+            st.image(np.array(image), caption="Uploaded Image")
         except Exception as e:
             st.error(f"⚠️ Could not display image: {e}")
 
@@ -176,35 +173,34 @@ if uploaded_file:
             img_array = preprocess_image(uploaded_file)
             preds = predict_image(model, img_array)[0]
             sorted_idx = np.argsort(preds)[::-1]
-            top_idx = sorted_idx[:3]
+            top_idx = sorted_idx[:min(3, len(preds))]
 
-            top_labels = [labels[i] for i in top_idx]
-            top_scores = [preds[i] * 100 for i in top_idx]
-
-            predicted_label = top_labels[0]
-            confidence = top_scores[0]
-
-            if confidence < 65 or predicted_label.lower().startswith("animal"):
-                st.error("🚫 This doesn’t seem to be a fish image.")
+            # safe prediction (no index error)
+            if len(top_idx) == 0 or len(labels) == 0:
+                st.error("⚠️ Model output mismatch with labels. Please check label count.")
             else:
-                st.markdown(
-                    f"<div class='prediction-box'>🎯 <b>{predicted_label}</b><br>Confidence: {confidence:.2f}%</div>",
-                    unsafe_allow_html=True
-                )
-                st.markdown(
-                    f"<p class='desc'>{fish_descriptions.get(predicted_label, 'A fascinating aquatic species!')}</p>",
-                    unsafe_allow_html=True
-                )
+                top_labels = [labels[i] for i in top_idx if i < len(labels)]
+                top_scores = [preds[i] * 100 for i in top_idx if i < len(labels)]
 
-                st.markdown("### 🧠 Predictions Summary")
-                for label, score in zip(top_labels, top_scores):
-                    st.write(f"🐟 **{label}** — {score:.2f}%")
+                predicted_label = top_labels[0]
+                confidence = top_scores[0]
+
+                if confidence < 60:
+                    st.error("🚫 This doesn’t seem to be a fish image.")
+                else:
+                    st.markdown(
+                        f"<div class='prediction-box'>🎯 <b>{predicted_label}</b><br>Confidence: {confidence:.2f}%</div>",
+                        unsafe_allow_html=True
+                    )
+                    st.markdown(
+                        f"<p class='desc'>{fish_descriptions.get(predicted_label, 'A fascinating aquatic species!')}</p>",
+                        unsafe_allow_html=True
+                    )
+
+                    st.markdown("### 🧠 Top Predictions")
+                    for label, score in zip(top_labels, top_scores):
+                        st.write(f"🐠 **{label}** — {score:.2f}%")
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
 else:
     st.info("⬆️ Upload an image to begin classification")
-
-# ==============================
-# FOOTER
-# ==============================
-st.markdown("<br><hr><p style='text-align:center; font-size:0.9rem;'>Built with 💙 by <b>Santhiya Baskar</b> | Powered by TensorFlow Lite & Streamlit © 2025 FishVision 🐬</p>", unsafe_allow_html=True)
