@@ -1,5 +1,7 @@
-streamlit==1.38.0
-tensorflow-cpu==2.15.0
-keras==2.15.0
+streamlit==1.37.1
+tensorflow-cpu==2.14.0
+keras==2.14.0
 numpy==1.26.4
-pillow
+pillow==10.4.0
+protobuf==3.20.*
+h5py==3.10.0
