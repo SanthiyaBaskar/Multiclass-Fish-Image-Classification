@@ -1,6 +1,0 @@
-streamlit==1.38.0
-numpy==1.26.4
-pillow==10.4.0
-protobuf==4.25.3
-# TFLite runtime for Python 3.13 (universal wheel)
-https://github.com/google-coral/pycoral/releases/download/release-frogfish/tflite_runtime-2.14.0-cp313-cp313-manylinux_2_31_x86_64.whl

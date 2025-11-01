@@ -1,0 +1,10 @@
+name: fishvision
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+      - streamlit==1.38.0
+      - numpy==1.26.4
+      - pillow==10.4.0
+      - protobuf==4.25.3
+      - tflite-runtime==2.14.0
