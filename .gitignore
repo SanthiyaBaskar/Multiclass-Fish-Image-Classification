@@ -1,0 +1,16 @@
+# Ignore virtual environment
+venv/
+
+# Ignore model checkpoints or cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# Ignore dataset folders if large
+Dataset/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
