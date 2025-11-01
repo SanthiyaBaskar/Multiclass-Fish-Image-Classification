@@ -151,7 +151,9 @@ def predict_image(interpreter, img_array):
 if uploaded_file:
     colA, colB = st.columns([1, 1])
     with colA:
-        st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+        image = Image.open(uploaded_file)
+        st.image(image, caption="Uploaded Image", use_container_width=True)
+
     with colB:
         try:
             img_array = preprocess_image(uploaded_file)
