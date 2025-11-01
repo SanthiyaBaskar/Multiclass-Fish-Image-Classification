@@ -32,22 +32,12 @@ st.markdown("""
             margin-bottom: 10px;
             font-size: 1.1rem;
         }
-        .feature-box {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-            margin-bottom: 25px;
-        }
-        .feature {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 10px 20px;
+        .feature-line {
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 0 8px rgba(0,191,255,0.3);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            color: #AEEEEE;
+            margin-top: 10px;
+            margin-bottom: 20px;
         }
         .prediction-box {
             background: #04293A;
@@ -98,7 +88,7 @@ def load_labels():
 model = load_model()
 labels = load_labels()
 
-# 🔹 Skip first 2 labels if model has 11 outputs (you deleted 2 folders)
+# 🔹 Skip first 2 labels if model has 11 outputs (since you deleted 2 folders)
 if len(labels) == 11:
     labels = labels[2:]
 
@@ -118,14 +108,11 @@ fish_descriptions = {
 }
 
 # ==============================
-# FEATURES SECTION
+# FEATURES LINE (SINGLE LINE)
 # ==============================
 st.markdown("""
-<div class='feature-box'>
-    <div class='feature'>🐟 Detects 9 Fish Species</div>
-    <div class='feature'>📊 Top-3 Prediction Confidence</div>
-    <div class='feature'>💬 Fish Descriptions</div>
-    <div class='feature'>🌊 Compact Blue-Themed Interface</div>
+<div class='feature-line'>
+🐟 Detects 9 Fish Species &nbsp;&nbsp;|&nbsp;&nbsp; 📊 Top-3 Predictions &nbsp;&nbsp;|&nbsp;&nbsp; 💬 Descriptions &nbsp;&nbsp;|&nbsp;&nbsp; 🌊 Blue-Themed Interface
 </div>
 """, unsafe_allow_html=True)
 
@@ -154,15 +141,22 @@ def predict_image(interpreter, img_array):
 # ==============================
 if uploaded_file:
     colA, colB = st.columns([1, 1])
+
     with colA:
-        image = Image.open(uploaded_file).convert("RGB")
-        st.image(np.array(image), caption="Uploaded Image", use_container_width=True)
+        try:
+            image = Image.open(uploaded_file)
+            image = image.convert("RGB")
+            st.image(image, caption="Uploaded Image", use_container_width=True)
+        except Exception as e:
+            st.error(f"⚠️ Could not display image. Error: {e}")
+            st.stop()
+
     with colB:
         try:
             img_array = preprocess_image(uploaded_file)
             preds = predict_image(model, img_array)[0]
 
-            # If model still outputs 11 values, use last 9 (since first 2 were deleted)
+            # Handle 11-output model (use last 9)
             if len(preds) == 11:
                 preds = preds[2:]
 
@@ -189,7 +183,8 @@ if uploaded_file:
                 st.markdown("### 🧠 Predictions Summary")
                 for label, score in zip(top_labels, top_scores):
                     st.write(f"🐠 **{label}** — {score:.2f}%")
+
         except Exception as e:
-            st.error(f"⚠️ Error: {e}")
+            st.error(f"⚠️ Error during prediction: {e}")
 else:
     st.info("⬆️ Upload an image to begin classification")
