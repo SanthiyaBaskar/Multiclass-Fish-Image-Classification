@@ -1,4 +1,4 @@
-🐠 FishVision - Smart Fish Species Classifier
+                                              🐠 FishVision - Smart Fish Species Classifier
 
 🧩 Problem Statement
 - The task is to build a web-based image classification system that can identify different fish species from the given multiclass dataset.
@@ -33,3 +33,4 @@ Upload a random image 🚫 → Get “Not a Fish” warning ⚠️
 👩‍💻 Developed by Santhiya Baskar
 
 📘 GUVI Mini Project – Assignment 5
+
